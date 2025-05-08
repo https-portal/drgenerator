@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Size Entry</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-container {
+      background-color: #fff;
+      padding: 20px 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+    input:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .alert {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .alert.success {
+      color: green;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7k0MQEV0Q1Yehjy4pZZhGnQaBrQMhKEU",
+      authDomain: "drgenerator-c598e.firebaseapp.com",
+      projectId: "drgenerator-c598e",
+      storageBucket: "drgenerator-c598e.appspot.com",
+      messagingSenderId: "936022417844",
+      appId: "1:936022417844:web:e4f2778b3313fc8c78d2e1",
+      measurementId: "G-7WDR6XCDVE"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Form submit handler
+    window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById("sizeForm");
+      const alertDiv = document.getElementById("alert");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const sizeValue = document.getElementById("sizeInput").value.trim();
+
+        if (!sizeValue) {
+          showAlert("Please enter a size.", "error");
+          return;
+        }
+
+        const sizeRef = ref(db, "size");
+
+        try {
+          const snapshot = await get(sizeRef);
+          const existingData = snapshot.exists() ? snapshot.val() : {};
+          const count = Object.keys(existingData).length + 1;
+          const key = `size${count}`;
+
+          await set(ref(db, `size/${key}`), sizeValue);
+          showAlert("Size added successfully!", "success");
+          form.reset();
+        } catch (error) {
+          showAlert("Error saving data: " + error.message, "error");
+        }
+      });
+
+      function showAlert(message, type) {
+        alertDiv.textContent = message;
+        alertDiv.className = `alert ${type}`;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Enter Size</h2>
+    <div id="alert" class="alert"></div>
+    <form id="sizeForm">
+      <label for="sizeInput">Size:</label>
+      <input type="text" id="sizeInput" required />
+      <button type="submit">Submit</button>
+    </form>
+    <div style="text-align: center; margin-top: 15px;">
+      <a href="index.html" style="
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+      " onmouseover="this.style.backgroundColor='#5a6268'" onmouseout="this.style.backgroundColor='#6c757d'">
+        Back
+      </a>
+    </div>
+  </div>
+</body>
+

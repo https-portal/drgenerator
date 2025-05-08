@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Button Panel</title>
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 15px;
+  }
+  .container {
+    width: 100%;
+    max-width: 350px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow:
+      0 10px 15px rgba(102, 126, 234, 0.3),
+      0 4px 6px rgba(118, 75, 162, 0.2);
+    padding: 30px 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  button {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    padding: 16px 0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow:
+      0 6px 12px rgba(102, 126, 234, 0.5);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+    user-select: none;
+  }
+  button::after {
+    content: "";
+    position: absolute;
+    width: 120%;
+    height: 100%;
+    top: 0;
+    left: -110%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: skewX(-25deg);
+    transition: left 0.5s ease;
+  }
+  button:hover::after {
+    left: 110%;
+  }
+  button:hover,
+  button:focus {
+    background: linear-gradient(135deg, #5b3f99, #5f7cd8);
+    box-shadow:
+      0 8px 20px rgba(102, 126, 234, 0.7);
+    outline: none;
+  }
+  /* Ripple effect */
+  button.ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  button.ripple span {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 600ms linear;
+    background-color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+  }
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  @media (max-width: 400px) {
+    button {
+      font-size: 1.1rem;
+      padding: 14px 0;
+      border-radius: 10px;
+    }
+    .container {
+      padding: 25px 20px;
+      border-radius: 18px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container" role="region" aria-label="Button Controls">
+    <button id="btnAddSizes" class="ripple" type="button" aria-label="Add Sizes">Add Sizes</button>
+    <button id="btnContractor" class="ripple" type="button" aria-label="Contractor">Contractor</button>
+    <button id="btnGenerateDR" class="ripple" type="button" aria-label="Generate DR">Generate DR</button>
+    <button id="btnViewSent" class="ripple" type="button" aria-label="View and Sent">View &amp; Sent</button>
+  </div>
+<script>
+  // Ripple effect function
+  function createRipple(event) {
+    const button = event.currentTarget;
+    const circle = document.createElement("span");
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = diameter + "px";
+    circle.style.left = event.clientX - button.getBoundingClientRect().left - radius + "px";
+    circle.style.top = event.clientY - button.getBoundingClientRect().top - radius + "px";
+    circle.classList.add("ripple");
+    const rippleSpan = button.querySelector("span");
+    if (rippleSpan) {
+      rippleSpan.remove();
+    }
+    button.appendChild(circle);
+  }
+
+  document.getElementById('btnAddSizes').addEventListener('click', (e) => {
+    createRipple(e);
+    setTimeout(() => {
+      window.location.href = 'add sizes.html';
+    }, 200);
+  });
+
+  document.getElementById('btnContractor').addEventListener('click', (e) => {
+    createRipple(e);
+    setTimeout(() => {
+      window.location.href = 'contractor.html';
+    }, 200);
+  });
+
+  document.getElementById('btnGenerateDR').addEventListener('click', (e) => {
+    createRipple(e);
+    setTimeout(() => {
+      window.location.href = 'generate dr.html';
+    }, 200);
+  });
+
+  document.getElementById('btnViewSent').addEventListener('click', (e) => {
+    createRipple(e);
+    setTimeout(() => {
+      window.location.href = 'viewandsent.html';
+    }, 200);
+  });
+</script>
+</body>
+</html>
+</content>
+</create_file>

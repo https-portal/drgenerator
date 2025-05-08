@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contractor Data Entry</title>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container for the form */
+        .form-container {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* Heading Styling */
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Label Styling */
+        label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        /* Input field styling */
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* Button styling */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Alert Styling */
+        .alert {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .alert.success {
+            color: green;
+        }
+
+        .alert.error {
+            color: red;
+        }
+
+        /* Flexbox for Form Layout */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        /* Spacing between elements */
+        .form-container > * {
+            margin-bottom: 16px;
+        }
+    </style>
+    <!-- Firebase SDK v9+ for modular imports -->
+    <script type="module">
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7k0MQEV0Q1Yehjy4pZZhGnQaBrQMhKEU",
+            authDomain: "drgenerator-c598e.firebaseapp.com",
+            projectId: "drgenerator-c598e",
+            storageBucket: "drgenerator-c598e.firebasestorage.app",
+            messagingSenderId: "936022417844",
+            appId: "1:936022417844:web:e4f2778b3313fc8c78d2e1",
+            measurementId: "G-7WDR6XCDVE"
+        };
+
+        // Import the Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);  // Initialize the database
+
+        // Listen to form submission
+        document.getElementById('contractorForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Get input values
+            const contractorName = document.getElementById('contractor').value;
+            const plateNumber = document.getElementById('plateNumber').value;
+            const driverName = document.getElementById('driverName').value;
+
+            // Check if the inputs are empty
+            if (!contractorName || !plateNumber || !driverName) {
+                displayAlert('Please fill all fields', 'error');
+                return;
+            }
+
+            // Create a reference for the contractor's data
+            const contractorRef = ref(database, 'contractors/' + contractorName);
+            
+            // Get existing contractor data (if any)
+            get(contractorRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    // Data for this contractor already exists
+                    let contractorData = snapshot.val();
+
+                    // Find the next available index for driver and plate number
+                    let driverCount = Object.keys(contractorData).filter(key => key.startsWith('driverName')).length + 1;
+                    let plateCount = Object.keys(contractorData).filter(key => key.startsWith('plateNumber')).length + 1;
+
+                    // Update contractor data
+                    set(ref(database, `contractors/${contractorName}/driverName${driverCount}`), driverName);
+                    set(ref(database, `contractors/${contractorName}/plateNumber${plateCount}`), plateNumber)
+                        .then(() => {
+                            displayAlert('Contractor data updated successfully!', 'success');
+                            // Optionally, reset the form fields
+                            document.getElementById('contractorForm').reset();
+                        })
+                        .catch(error => {
+                            displayAlert('Error saving data: ' + error.message, 'error');
+                        });
+                } else {
+                    // No data exists for this contractor, create a new entry
+                    set(ref(database, `contractors/${contractorName}/contractorName`), contractorName);
+                    set(ref(database, `contractors/${contractorName}/driverName1`), driverName);
+                    set(ref(database, `contractors/${contractorName}/plateNumber1`), plateNumber)
+                        .then(() => {
+                            displayAlert('Contractor data saved successfully!', 'success');
+                            // Optionally, reset the form fields
+                            document.getElementById('contractorForm').reset();
+                        })
+                        .catch(error => {
+                            displayAlert('Error saving data: ' + error.message, 'error');
+                        });
+                }
+            });
+        });
+
+        function displayAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('success', 'error');
+            alertDiv.classList.add(type);
+        }
+    </script>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Contractor Data Entry</h2>
+        <div id="alert" class="alert"></div>
+        <form id="contractorForm">
+            <div class="form-group">
+                <label for="contractor">Contractor Name:</label>
+                <input type="text" id="contractor" required>
+            </div>
+            <div class="form-group">
+                <label for="plateNumber">Plate Number:</label>
+                <input type="text" id="plateNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="driverName">Driver Name:</label>
+                <input type="text" id="driverName" required>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+        <!-- Back Button -->
+        <button onclick="window.location.href='index.html'" style="margin-top: 10px; background-color: #6c757d;">
+            ← Back to Home
+        </button>
+    </div>
+</body>

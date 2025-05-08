@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DR GENERATOR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .form-container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .alert {
+      color: red;
+      font-size: 14px;
+    }
+    .alert.success {
+      color: green;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7k0MQEV0Q1Yehjy4pZZhGnQaBrQMhKEU",
+      authDomain: "drgenerator-c598e.firebaseapp.com",
+      projectId: "drgenerator-c598e",
+      storageBucket: "drgenerator-c598e.appspot.com",
+      messagingSenderId: "936022417844",
+      appId: "1:936022417844:web:e4f2778b3313fc8c78d2e1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const truckingSelect = document.getElementById("trucking");
+      const plateSelect = document.getElementById("plate");
+      const driverSelect = document.getElementById("driver");
+      const sizeSelect = document.getElementById("size");
+      const form = document.getElementById("drForm");
+      const alertDiv = document.getElementById("alert");
+
+      // Load sizes
+      get(ref(db, 'size')).then(snapshot => {
+        if (snapshot.exists()) {
+          const sizes = snapshot.val();
+          Object.keys(sizes).forEach(key => {
+            const size = sizes[key];
+            const option = document.createElement('option');
+            option.value = size;
+            option.textContent = size;
+            sizeSelect.appendChild(option);
+          });
+        }
+      });
+
+      // Populate contractors
+      get(ref(db, "/contractors")).then(snapshot => {
+        if (snapshot.exists()) {
+          const contractors = snapshot.val();
+          Object.keys(contractors).forEach(name => {
+            let option = document.createElement("option");
+            option.text = name;
+            truckingSelect.add(option);
+          });
+        }
+      });
+
+      // Update plates and drivers when contractor selected
+      truckingSelect.addEventListener("change", () => {
+        const contractor = truckingSelect.value;
+        plateSelect.innerHTML = "";
+        driverSelect.innerHTML = "";
+        get(ref(db, `/contractors/${contractor}`)).then(snapshot => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            Object.keys(data).forEach(key => {
+              if (key.startsWith("plateNumber")) {
+                let option = document.createElement("option");
+                option.text = data[key];
+                plateSelect.add(option);
+              }
+              if (key.startsWith("driverName")) {
+                let option = document.createElement("option");
+                option.text = data[key];
+                driverSelect.add(option);
+              }
+            });
+          }
+        });
+      });
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let client = document.getElementById("client").value; // Get the client value
+  let veco = document.getElementById("veco").value; // Get the current DR# (veco)
+  let cpris = document.getElementById("cpris").value; // Get the current cpris value
+  const pis = document.getElementById("pis").value;
+  const size = sizeSelect.value;
+  const trucking = truckingSelect.value;
+  const plate = plateSelect.value;
+  const driver = driverSelect.value;
+
+  const now = new Date();
+  const datePath = now.toISOString().split('T')[0]; // Format: 2025-04-05
+
+  // Reference to the DRs for the current date
+  const drRef = ref(db, `${datePath}`);
+
+  try {
+    // Get the existing DRs for that day
+    const snapshot = await get(drRef);
+    let newVecodrNumber = parseInt(veco.replace("#", ""), 10) || 1; // Default to 1 if no vecodr value is found
+    let newCprisNumber = parseInt(cpris, 10) || 1; // Default to 1 if cpris is empty or not a valid number
+
+    // Save the current DR values to Firebase
+    const newDrPath = `${datePath}/vecodr${newVecodrNumber}`;
+    await set(ref(db, newDrPath), {
+      details: {
+        client,  // Save the client value
+        veco,
+        size,
+        pis,
+        cpris,
+        trucking,
+        plate,
+        driver
+      }
+    });
+
+    // After saving, increment the DR# and cpris# for the next entry
+    newVecodrNumber += 1;
+    newCprisNumber += 1;
+
+    // Update the input fields with the incremented values
+    veco = `#${newVecodrNumber}`; // Set the new DR# value
+    cpris = newCprisNumber.toString(); // Convert to string in case it's needed
+
+    document.getElementById("veco").value = veco; // Update the DR# input field
+    document.getElementById("cpris").value = cpris; // Update the cpris input field
+
+    showAlert("Data saved successfully!", "success");
+  } catch (err) {
+    showAlert("Error saving data: " + err.message, "error");
+  }
+});
+
+
+      function showAlert(message, type) {
+        alertDiv.textContent = message;
+        alertDiv.className = `alert ${type}`;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="form-container">
+    <h2>DR GENERATOR</h2>
+    <div id="alert" class="alert"></div>
+    <form id="drForm">
+      <label for="client">Client:</label>
+      <input type="text" id="client" value="VECO" required />
+
+      <label for="veco">DR #:</label>
+      <input type="text" id="veco" required placeholder="Enter DR #" value="#" />
+
+      <label for="size">Size:</label>
+      <select id="size" required></select>
+
+      <label for="pis">PIS#:</label>
+      <input type="text" id="pis" required />
+
+      <label for="cpris">CPRIS#:</label>
+      <input type="text" id="cpris" required />
+
+      <label for="trucking">TRUCKING:</label>
+      <select id="trucking" required></select>
+
+      <label for="plate">PLATE#:</label>
+      <select id="plate" required></select>
+
+      <label for="driver">DRIVER'S NAME:</label>
+      <select id="driver" required></select>
+
+      <button type="submit">Generate</button>
+       </form>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <a href="index.html">
+        <button type="button" style="background-color: #6c757d;">Back</button>
+      </a>
+    </div>
+  </div>
