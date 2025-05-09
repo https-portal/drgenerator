@@ -56,12 +56,50 @@
     .alert.success {
       color: green;
     }
+
+    /* Modal popup styles */
+    .modal {
+      display: none; 
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 300px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
   </style>
 
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA7k0MQEV0Q1Yehjy4pZZhGnQaBrQMhKEU",
@@ -82,6 +120,8 @@
       const sizeSelect = document.getElementById("size");
       const form = document.getElementById("drForm");
       const alertDiv = document.getElementById("alert");
+      const modal = document.getElementById("successModal");
+      const closeBtn = document.getElementById("closeModal");
 
       // Load sizes
       get(ref(db, 'size')).then(snapshot => {
@@ -133,68 +173,72 @@
         });
       });
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  let client = document.getElementById("client").value; // Get the client value
-  let veco = document.getElementById("veco").value; // Get the current DR# (veco)
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        let client = document.getElementById("client").value;
+        let veco = document.getElementById("veco").value;
+        let cpris = document.getElementById("cpris").value;
+        const pis = document.getElementById("pis").value;
+        const quantity = document.getElementById("qty").value;
+        const size = sizeSelect.value;
+        const trucking = truckingSelect.value;
+        const plate = plateSelect.value;
+        const driver = driverSelect.value;
 
-  let cpris = document.getElementById("cpris").value; // Get the current cpris value
-  const pis = document.getElementById("pis").value;
-  const quantity = document.getElementById("qty").value;
-  const size = sizeSelect.value;
-  const trucking = truckingSelect.value;
-  const plate = plateSelect.value;
-  const driver = driverSelect.value;
+        const now = new Date();
+        const datePath = now.toISOString().split('T')[0];
 
-  const now = new Date();
-  const datePath = now.toISOString().split('T')[0]; // Format: 2025-04-05
+        const drRef = ref(db, `${datePath}`);
 
-  // Reference to the DRs for the current date
-  const drRef = ref(db, `${datePath}`);
+        try {
+          const snapshot = await get(drRef);
+          let newVecodrNumber = parseInt(veco.replace("#", ""), 10) || 1;
+          let newCprisNumber = parseInt(cpris, 10) || 1;
 
-  try {
-    // Get the existing DRs for that day
-    const snapshot = await get(drRef);
-    let newVecodrNumber = parseInt(veco.replace("#", ""), 10) || 1; // Default to 1 if no vecodr value is found
-    let newCprisNumber = parseInt(cpris, 10) || 1; // Default to 1 if cpris is empty or not a valid number
+          const newDrPath = `${datePath}/vecodr${newVecodrNumber}`;
+          await set(ref(db, newDrPath), {
+            details: {
+              client,
+              veco,
+              size,
+              quantity,
+              pis,
+              cpris,
+              trucking,
+              plate,
+              driver
+            }
+          });
 
-    // Save the current DR values to Firebase
-    const newDrPath = `${datePath}/vecodr${newVecodrNumber}`;
-    await set(ref(db, newDrPath), {
-      details: {
-        client,  // Save the client value
-        veco,
-        size,
-	quantity,
-        pis,
-        cpris,
-        trucking,
-        plate,
-        driver
-      }
-    });
+          newVecodrNumber += 1;
+          newCprisNumber += 1;
 
-    // After saving, increment the DR# and cpris# for the next entry
-    newVecodrNumber += 1;
-    newCprisNumber += 1;
+          document.getElementById("veco").value = `#${newVecodrNumber}`;
+          document.getElementById("cpris").value = newCprisNumber.toString();
 
-    // Update the input fields with the incremented values
-    veco = `#${newVecodrNumber}`; // Set the new DR# value
-    cpris = newCprisNumber.toString(); // Convert to string in case it's needed
-
-    document.getElementById("veco").value = veco; // Update the DR# input field
-    document.getElementById("cpris").value = cpris; // Update the cpris input field
-
-    showAlert("Data saved successfully!", "success");
-  } catch (err) {
-    showAlert("Error saving data: " + err.message, "error");
-  }
-});
-
+          showAlert("Data saved successfully!", "success");
+        } catch (err) {
+          showAlert("Error saving data: " + err.message, "error");
+        }
+      });
 
       function showAlert(message, type) {
-        alertDiv.textContent = message;
-        alertDiv.className = `alert ${type}`;
+        if (type === "success") {
+          modal.style.display = "block";
+        } else {
+          alertDiv.textContent = message;
+          alertDiv.className = `alert ${type}`;
+        }
+      }
+
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      }
+
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
       }
     });
   </script>
@@ -213,11 +257,8 @@ form.addEventListener("submit", async (e) => {
       <label for="size">Size:</label>
       <select id="size" required></select>
 
-
-
       <label for="pis">Quantity:</label>
       <input type="text" id="qty" required />
-
 
       <label for="pis">PIS#:</label>
       <input type="text" id="pis" required />
@@ -235,7 +276,7 @@ form.addEventListener("submit", async (e) => {
       <select id="driver" required></select>
 
       <button type="submit">Generate</button>
-       </form>
+    </form>
 
     <div style="text-align: center; margin-top: 10px;">
       <a href="index.html">
@@ -243,3 +284,13 @@ form.addEventListener("submit", async (e) => {
       </a>
     </div>
   </div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <p><strong>DR generated successfully!</strong></p>
+    </div>
+  </div>
+</body>
+</html>
