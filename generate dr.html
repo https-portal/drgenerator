@@ -137,8 +137,10 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   let client = document.getElementById("client").value; // Get the client value
   let veco = document.getElementById("veco").value; // Get the current DR# (veco)
+
   let cpris = document.getElementById("cpris").value; // Get the current cpris value
   const pis = document.getElementById("pis").value;
+  const quantity = document.getElementById("qty").value;
   const size = sizeSelect.value;
   const trucking = truckingSelect.value;
   const plate = plateSelect.value;
@@ -163,6 +165,7 @@ form.addEventListener("submit", async (e) => {
         client,  // Save the client value
         veco,
         size,
+	quantity,
         pis,
         cpris,
         trucking,
@@ -209,6 +212,12 @@ form.addEventListener("submit", async (e) => {
 
       <label for="size">Size:</label>
       <select id="size" required></select>
+
+
+
+      <label for="pis">Quantity:</label>
+      <input type="text" id="qty" required />
+
 
       <label for="pis">PIS#:</label>
       <input type="text" id="pis" required />
