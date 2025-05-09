@@ -136,6 +136,7 @@
             row.innerHTML = `
               <td>${drDetails.veco || ""}</td>
               <td>${drDetails.size || ""}</td>
+               <td>${drDetails.quantity || ""}</td>
               <td>${drDetails.pis || ""}</td>
               <td>${drDetails.cpris || ""}</td>
               <td>${drDetails.trucking || ""}</td>
@@ -170,12 +171,13 @@
         }
 
         const data = drDataMap[selectedDR];
+        const formattedQuantity = (data.quantity || "").replace(/\s*-\s*/g, "-");
 
         const message = 
 `VECO
 ${data.veco}
 
-SIZE: ${data.size || ""}
+SIZE:${data.size || ""}/${formattedQuantity}
 PIS#: ${data.pis || ""}
 CPRIS#: ${data.cpris || ""}
 TRUCKING: ${data.trucking || ""}
