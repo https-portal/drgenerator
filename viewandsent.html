@@ -86,6 +86,9 @@
     }
   </style>
 
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -136,7 +139,7 @@
             row.innerHTML = `
               <td>${drDetails.veco || ""}</td>
               <td>${drDetails.size || ""}</td>
-               <td>${drDetails.quantity || ""}</td>
+              <td>${drDetails.quantity || ""}</td>
               <td>${drDetails.pis || ""}</td>
               <td>${drDetails.cpris || ""}</td>
               <td>${drDetails.trucking || ""}</td>
@@ -153,6 +156,13 @@
       }
 
       loadingMessage.style.display = "none";
+
+      // Export to Excel logic
+      document.getElementById('export-excel').addEventListener('click', () => {
+        const table = document.querySelector("table");
+        const workbook = XLSX.utils.table_to_book(table, { sheet: "DR Summary" });
+        XLSX.writeFile(workbook, "DR_Summary.xlsx");
+      });
     });
 
     function showAlert(message, type) {
@@ -202,8 +212,8 @@ DRIVER'S NAME: ${data.driver || ""}`;
           <tr>
             <th>VECO</th>
             <th>Size</th>
-             <th> Quantity</th>
-             <th>PIS#</th>
+            <th>Quantity</th>
+            <th>PIS#</th>
             <th>CPRIS#</th>
             <th>Trucking</th>
             <th>Plate#</th>
@@ -225,8 +235,9 @@ DRIVER'S NAME: ${data.driver || ""}`;
 
     <br><br>
 
-   <a href="index.html" class="btn">Back to DR Generator</a>
+    <a href="index.html" class="btn">Back to DR Generator</a>
     <a href="#" class="btn" id="send-sms">Send Selected DR as SMS</a>
+    <a href="#" class="btn" id="export-excel">Export Summary to Excel</a>
   </div>
 </body>
 </html>
