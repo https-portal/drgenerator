@@ -86,10 +86,8 @@
     }
   </style>
 
-  <!-- SheetJS for Excel export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
@@ -106,7 +104,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let drDataMap = {}; // Store DR data keyed by DR number
+    let drDataMap = {};
 
     window.addEventListener('DOMContentLoaded', async () => {
       const alertDiv = document.getElementById("alert");
@@ -118,23 +116,28 @@
 
       try {
         const now = new Date();
-        const datePath = now.toISOString().split('T')[0]; // Format: 2025-04-05
+        const datePath = now.toISOString().split('T')[0];
         const drRef = ref(db, datePath);
         const snapshot = await get(drRef);
 
         if (snapshot.exists()) {
           const data = snapshot.val();
-          Object.keys(data).forEach(drNumber => {
+
+          const sortedKeys = Object.keys(data).sort((a, b) => {
+            const numA = parseInt(a.replace(/[^\d]/g, ''));
+            const numB = parseInt(b.replace(/[^\d]/g, ''));
+            return numA - numB;
+          });
+
+          sortedKeys.forEach(drNumber => {
             const drDetails = data[drNumber].details;
             drDataMap[drNumber] = drDetails;
 
-            // Populate dropdown
             const option = document.createElement("option");
             option.value = drNumber;
             option.textContent = drNumber;
             drSelect.appendChild(option);
 
-            // Add to table
             const row = document.createElement('tr');
             row.innerHTML = `
               <td>${drDetails.veco || ""}</td>
@@ -157,7 +160,6 @@
 
       loadingMessage.style.display = "none";
 
-      // Export to Excel logic
       document.getElementById('export-excel').addEventListener('click', () => {
         const table = document.querySelector("table");
         const workbook = XLSX.utils.table_to_book(table, { sheet: "DR Summary" });
@@ -171,7 +173,6 @@
       alertDiv.className = `alert ${type}`;
     }
 
-    // SMS Sending Logic
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('send-sms').addEventListener('click', () => {
         const selectedDR = document.getElementById('dr-selector').value;
@@ -221,7 +222,6 @@ DRIVER'S NAME: ${data.driver || ""}`;
           </tr>
         </thead>
         <tbody id="data-body">
-          <!-- Data will be populated here -->
         </tbody>
       </table>
     </div>
