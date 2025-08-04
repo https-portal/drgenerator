@@ -56,10 +56,8 @@
     .alert.success {
       color: green;
     }
-
-    /* Modal popup styles */
     .modal {
-      display: none; 
+      display: none;
       position: fixed;
       z-index: 999;
       left: 0;
@@ -69,7 +67,6 @@
       overflow: auto;
       background-color: rgba(0,0,0,0.4);
     }
-
     .modal-content {
       background-color: #fff;
       margin: 15% auto;
@@ -80,14 +77,12 @@
       border-radius: 8px;
       text-align: center;
     }
-
     .close {
       color: #aaa;
       float: right;
       font-size: 28px;
       font-weight: bold;
     }
-
     .close:hover,
     .close:focus {
       color: black;
@@ -123,7 +118,6 @@
       const modal = document.getElementById("successModal");
       const closeBtn = document.getElementById("closeModal");
 
-      // Load sizes
       get(ref(db, 'size')).then(snapshot => {
         if (snapshot.exists()) {
           const sizes = snapshot.val();
@@ -137,7 +131,6 @@
         }
       });
 
-      // Populate contractors
       get(ref(db, "/contractors")).then(snapshot => {
         if (snapshot.exists()) {
           const contractors = snapshot.val();
@@ -149,7 +142,6 @@
         }
       });
 
-      // Update plates and drivers when contractor selected
       truckingSelect.addEventListener("change", () => {
         const contractor = truckingSelect.value;
         plateSelect.innerHTML = "";
@@ -184,6 +176,7 @@
         const trucking = truckingSelect.value;
         const plate = plateSelect.value;
         const driver = driverSelect.value;
+        const poleSeries = document.getElementById("poleSeries").value;
 
         const now = new Date();
         const datePath = now.toISOString().split('T')[0];
@@ -206,7 +199,8 @@
               cpris,
               trucking,
               plate,
-              driver
+              driver,
+              poleSeries
             }
           });
 
@@ -257,7 +251,7 @@
       <label for="size">Size:</label>
       <select id="size" required></select>
 
-      <label for="pis">Quantity:</label>
+      <label for="qty">Quantity:</label>
       <input type="text" id="qty" required />
 
       <label for="pis">PIS#:</label>
@@ -265,6 +259,9 @@
 
       <label for="cpris">CPRIS#:</label>
       <input type="text" id="cpris" required />
+
+      <label for="poleSeries">Pole Series Number:</label>
+      <input type="text" id="poleSeries" required placeholder="e.g. 001-010" />
 
       <label for="trucking">TRUCKING:</label>
       <select id="trucking" required></select>
