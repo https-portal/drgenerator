@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -148,6 +149,7 @@
               <td>${drDetails.trucking || ""}</td>
               <td>${drDetails.plate || ""}</td>
               <td>${drDetails.driver || ""}</td>
+              <td>${drDetails.poleSeries || ""}</td>
             `;
             tableBody.appendChild(row);
           });
@@ -193,7 +195,8 @@ PIS#: ${data.pis || ""}
 CPRIS#: ${data.cpris || ""}
 TRUCKING: ${data.trucking || ""}
 PLATE#: ${data.plate || ""}
-DRIVER'S NAME: ${data.driver || ""}`;
+DRIVER'S NAME: ${data.driver || ""}
+POLE SERIES: ${data.poleSeries || ""}`;
 
         const phoneNumber = "09175165597";
         const encodedMsg = encodeURIComponent(message);
@@ -219,6 +222,7 @@ DRIVER'S NAME: ${data.driver || ""}`;
             <th>Trucking</th>
             <th>Plate#</th>
             <th>Driver</th>
+            <th>Pole Series</th> <!-- NEW COLUMN -->
           </tr>
         </thead>
         <tbody id="data-body">
