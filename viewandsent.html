@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>View DR Data (Editable & Save)</title>
+  <title>View DR Data (Editable & Save All)</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -143,22 +143,23 @@
 
             const row = document.createElement('tr');
             row.innerHTML = `
-              <td contenteditable="true" data-field="veco">${drDetails.veco || ""}</td>
-              <td contenteditable="true" data-field="size">${drDetails.size || ""}</td>
-              <td contenteditable="true" data-field="quantity">${drDetails.quantity || ""}</td>
-              <td contenteditable="true" data-field="pis">${drDetails.pis || ""}</td>
-              <td contenteditable="true" data-field="cpris">${drDetails.cpris || ""}</td>
-              <td contenteditable="true" data-field="trucking">${drDetails.trucking || ""}</td>
-              <td contenteditable="true" data-field="plate">${drDetails.plate || ""}</td>
-              <td contenteditable="true" data-field="driver">${drDetails.driver || ""}</td>
-              <td contenteditable="true" data-field="poleSeries">${drDetails.poleSeries || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="veco">${drDetails.veco || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="size">${drDetails.size || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="quantity">${drDetails.quantity || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="pis">${drDetails.pis || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="cpris">${drDetails.cpris || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="trucking">${drDetails.trucking || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="plate">${drDetails.plate || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="driver">${drDetails.driver || ""}</td>
+              <td contenteditable="true" data-dr="${drNumber}" data-field="poleSeries">${drDetails.poleSeries || ""}</td>
             `;
 
-            // Listen for edits
+            // Track edits
             row.querySelectorAll("[contenteditable]").forEach(cell => {
               cell.addEventListener("input", () => {
+                const drNo = cell.getAttribute("data-dr");
                 const field = cell.getAttribute("data-field");
-                drDataMap[drNumber][field] = cell.innerText.trim();
+                drDataMap[drNo][field] = cell.innerText.trim();
               });
             });
 
@@ -208,21 +209,17 @@ POLE SERIES: ${data.poleSeries || ""}`;
         window.location.href = `sms:${phoneNumber}?body=${encodedMsg}`;
       });
 
-      // Save changes to Firebase
+      // Save all changes
       document.getElementById('save-changes').addEventListener('click', async () => {
-        const selectedDR = drSelect.value;
-        if (!selectedDR || !drDataMap[selectedDR]) {
-          alert("Please select a valid DR number to save.");
-          return;
-        }
-
         const now = new Date();
         const datePath = now.toISOString().split('T')[0];
-        const drRef = ref(db, `${datePath}/${selectedDR}/details`);
 
         try {
-          await update(drRef, drDataMap[selectedDR]);
-          alert("Changes saved to database!");
+          for (const drNo in drDataMap) {
+            const drRef = ref(db, `${datePath}/${drNo}/details`);
+            await update(drRef, drDataMap[drNo]);
+          }
+          alert("All changes saved to database!");
         } catch (err) {
           alert("Error saving changes: " + err.message);
         }
@@ -256,14 +253,13 @@ POLE SERIES: ${data.poleSeries || ""}`;
             <th>Pole Series</th>
           </tr>
         </thead>
-        <tbody id="data-body">
-        </tbody>
+        <tbody id="data-body"></tbody>
       </table>
     </div>
 
     <div id="loading" class="loading">Loading data...</div>
 
-    <label for="dr-selector"><strong>Select DR#:</strong></label>
+    <label for="dr-selector"><strong>Select DR# for SMS:</strong></label>
     <select id="dr-selector">
       <option value="">-- Select DR# --</option>
     </select>
@@ -273,7 +269,7 @@ POLE SERIES: ${data.poleSeries || ""}`;
     <a href="index.html" class="btn">Back to DR Generator</a>
     <a href="#" class="btn" id="send-sms">Send Selected DR as SMS</a>
     <a href="#" class="btn" id="export-excel">Export Summary to Excel</a>
-    <a href="#" class="btn" id="save-changes">Save Changes to Database</a>
+    <a href="#" class="btn" id="save-changes">Save All Changes to Database</a>
   </div>
 </body>
 </html>
