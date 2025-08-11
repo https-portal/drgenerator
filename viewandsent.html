@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>View DR Data</title>
+  <title>View DR Data (Editable)</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -55,6 +54,11 @@
     table td {
       font-size: 14px;
       color: #555;
+    }
+    table td[contenteditable="true"] {
+      background-color: #f9f9f9;
+      outline: none;
+      cursor: text;
     }
     .table-container {
       overflow-x: auto;
@@ -108,7 +112,6 @@
     let drDataMap = {};
 
     window.addEventListener('DOMContentLoaded', async () => {
-      const alertDiv = document.getElementById("alert");
       const tableBody = document.getElementById("data-body");
       const loadingMessage = document.getElementById("loading");
       const drSelect = document.getElementById("dr-selector");
@@ -123,7 +126,6 @@
 
         if (snapshot.exists()) {
           const data = snapshot.val();
-
           const sortedKeys = Object.keys(data).sort((a, b) => {
             const numA = parseInt(a.replace(/[^\d]/g, ''));
             const numB = parseInt(b.replace(/[^\d]/g, ''));
@@ -141,16 +143,25 @@
 
             const row = document.createElement('tr');
             row.innerHTML = `
-              <td>${drDetails.veco || ""}</td>
-              <td>${drDetails.size || ""}</td>
-              <td>${drDetails.quantity || ""}</td>
-              <td>${drDetails.pis || ""}</td>
-              <td>${drDetails.cpris || ""}</td>
-              <td>${drDetails.trucking || ""}</td>
-              <td>${drDetails.plate || ""}</td>
-              <td>${drDetails.driver || ""}</td>
-              <td>${drDetails.poleSeries || ""}</td>
+              <td contenteditable="true" data-field="veco">${drDetails.veco || ""}</td>
+              <td contenteditable="true" data-field="size">${drDetails.size || ""}</td>
+              <td contenteditable="true" data-field="quantity">${drDetails.quantity || ""}</td>
+              <td contenteditable="true" data-field="pis">${drDetails.pis || ""}</td>
+              <td contenteditable="true" data-field="cpris">${drDetails.cpris || ""}</td>
+              <td contenteditable="true" data-field="trucking">${drDetails.trucking || ""}</td>
+              <td contenteditable="true" data-field="plate">${drDetails.plate || ""}</td>
+              <td contenteditable="true" data-field="driver">${drDetails.driver || ""}</td>
+              <td contenteditable="true" data-field="poleSeries">${drDetails.poleSeries || ""}</td>
             `;
+
+            // Listen for edits
+            row.querySelectorAll("[contenteditable]").forEach(cell => {
+              cell.addEventListener("input", () => {
+                const field = cell.getAttribute("data-field");
+                drDataMap[drNumber][field] = cell.innerText.trim();
+              });
+            });
+
             tableBody.appendChild(row);
           });
         } else {
@@ -162,22 +173,16 @@
 
       loadingMessage.style.display = "none";
 
+      // Export to Excel
       document.getElementById('export-excel').addEventListener('click', () => {
         const table = document.querySelector("table");
         const workbook = XLSX.utils.table_to_book(table, { sheet: "DR Summary" });
         XLSX.writeFile(workbook, "DR_Summary.xlsx");
       });
-    });
 
-    function showAlert(message, type) {
-      const alertDiv = document.getElementById("alert");
-      alertDiv.textContent = message;
-      alertDiv.className = `alert ${type}`;
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
+      // Send SMS
       document.getElementById('send-sms').addEventListener('click', () => {
-        const selectedDR = document.getElementById('dr-selector').value;
+        const selectedDR = drSelect.value;
         if (!selectedDR || !drDataMap[selectedDR]) {
           alert("Please select a valid DR number.");
           return;
@@ -203,6 +208,12 @@ POLE SERIES: ${data.poleSeries || ""}`;
         window.location.href = `sms:${phoneNumber}?body=${encodedMsg}`;
       });
     });
+
+    function showAlert(message, type) {
+      const alertDiv = document.getElementById("alert");
+      alertDiv.textContent = message;
+      alertDiv.className = `alert ${type}`;
+    }
   </script>
 </head>
 <body>
@@ -222,7 +233,7 @@ POLE SERIES: ${data.poleSeries || ""}`;
             <th>Trucking</th>
             <th>Plate#</th>
             <th>Driver</th>
-            <th>Pole Series</th> <!-- NEW COLUMN -->
+            <th>Pole Series</th>
           </tr>
         </thead>
         <tbody id="data-body">
