@@ -108,6 +108,32 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // ----------------------------------------
+    //  AUTO DR NUMBER GENERATOR
+    // ----------------------------------------
+    async function getNextDRNumber(datePath) {
+      const drListRef = ref(db, datePath);
+      const snapshot = await get(drListRef);
+
+      if (!snapshot.exists()) {
+        return 1; // if no DR today → start at #1
+      }
+
+      let maxNumber = 0;
+      const records = snapshot.val();
+
+      Object.keys(records).forEach(key => {
+        if (key.startsWith("vecodr")) {
+          const num = parseInt(key.replace("vecodr", ""), 10);
+          if (num > maxNumber) maxNumber = num;
+        }
+      });
+
+      return maxNumber + 1;
+    }
+
+    // ----------------------------------------
+
     window.addEventListener('DOMContentLoaded', () => {
       const truckingSelect = document.getElementById("trucking");
       const plateSelect = document.getElementById("plate");
@@ -165,10 +191,13 @@
         });
       });
 
+      // ----------------------------------------
+      //  SAVE FORM WITH AUTO DR #
+      // ----------------------------------------
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+
         let client = document.getElementById("client").value;
-        let veco = document.getElementById("veco").value;
         let cpris = document.getElementById("cpris").value;
         const pis = document.getElementById("pis").value;
         const quantity = document.getElementById("qty").value;
@@ -181,13 +210,14 @@
         const now = new Date();
         const datePath = now.toISOString().split('T')[0];
 
-        const drRef = ref(db, `${datePath}`);
-
         try {
-          const snapshot = await get(drRef);
-          let newVecodrNumber = parseInt(veco.replace("#", ""), 10) || 1;
-          let newCprisNumber = parseInt(cpris, 10) || 1;
+          // GET NEXT DR NUMBER
+          const newVecodrNumber = await getNextDRNumber(datePath);
+          const veco = "#" + newVecodrNumber;
 
+          document.getElementById("veco").value = veco;
+
+          // SAVE
           const newDrPath = `${datePath}/vecodr${newVecodrNumber}`;
           await set(ref(db, newDrPath), {
             details: {
@@ -204,13 +234,13 @@
             }
           });
 
-          newVecodrNumber += 1;
-          newCprisNumber += 1;
-
-          document.getElementById("veco").value = `#${newVecodrNumber}`;
-          document.getElementById("cpris").value = newCprisNumber.toString();
+          // auto increment Cpris
+          let newCprisNumber = parseInt(cpris, 10) || 1;
+          newCprisNumber++;
+          document.getElementById("cpris").value = newCprisNumber;
 
           showAlert("Data saved successfully!", "success");
+
         } catch (err) {
           showAlert("Error saving data: " + err.message, "error");
         }
@@ -245,8 +275,8 @@
       <label for="client">Client:</label>
       <input type="text" id="client" value="VECO" required />
 
-      <label for="veco">DR #:</label>
-      <input type="text" id="veco" required placeholder="Enter DR #" value="#" />
+      <label for="veco">DR # (Auto):</label>
+      <input type="text" id="veco" required readonly />
 
       <label for="size">Size:</label>
       <select id="size" required></select>
