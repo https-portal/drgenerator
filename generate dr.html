@@ -3,95 +3,186 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DR GENERATOR</title>
+  <title>DR GENERATOR | Dashboard</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-dark: #0f172a;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --input-bg: #f8fafc;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top left, #1e293b, #0f172a);
       margin: 0;
       padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      color: var(--text-main);
     }
+
     .form-container {
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       width: 100%;
-      max-width: 500px;
+      max-width: 650px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    h2 {
+
+    header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 32px;
     }
+
+    h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
     label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    input, select, button {
+
+    input, select {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
+      padding: 12px 14px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      background-color: var(--input-bg);
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      color: var(--text-main);
     }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      background-color: #fff;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    input[readonly] {
+      background-color: #f1f5f9;
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .button-stack {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     button {
-      background-color: #007bff;
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
       color: white;
       border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
     }
+
     button:hover {
-      background-color: #0056b3;
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
     }
-    .alert {
-      color: red;
+
+    .back-link {
+      text-align: center;
+      text-decoration: none;
       font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 8px;
+      transition: color 0.2s;
     }
-    .alert.success {
-      color: green;
-    }
+
+    .back-link:hover { color: var(--primary); }
+
+    /* Modal Styling */
     .modal {
       display: none;
       position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.4);
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
     }
+
     .modal-content {
-      background-color: #fff;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 300px;
-      border-radius: 8px;
+      background: white;
+      padding: 40px;
+      border-radius: 24px;
       text-align: center;
+      max-width: 400px;
+      position: relative;
     }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
+
+    .modal-content h3 { margin-top: 0; color: #10b981; }
+
+    .close-modal {
+      margin-top: 20px;
+      background: #f1f5f9;
+      color: #475569;
     }
-    .close:hover,
-    .close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: span 1; }
     }
   </style>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
@@ -108,216 +199,187 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // ----------------------------------------
-    //  AUTO DR NUMBER GENERATOR
-    // ----------------------------------------
     async function getNextDRNumber(datePath) {
       const drListRef = ref(db, datePath);
       const snapshot = await get(drListRef);
-
-      if (!snapshot.exists()) {
-        return 1; // if no DR today → start at #1
-      }
-
+      if (!snapshot.exists()) return 1;
       let maxNumber = 0;
       const records = snapshot.val();
-
       Object.keys(records).forEach(key => {
         if (key.startsWith("vecodr")) {
           const num = parseInt(key.replace("vecodr", ""), 10);
           if (num > maxNumber) maxNumber = num;
         }
       });
-
       return maxNumber + 1;
     }
 
-    // ----------------------------------------
-
     window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById("drForm");
+      const sizeSelect = document.getElementById("size");
       const truckingSelect = document.getElementById("trucking");
       const plateSelect = document.getElementById("plate");
       const driverSelect = document.getElementById("driver");
-      const sizeSelect = document.getElementById("size");
-      const form = document.getElementById("drForm");
-      const alertDiv = document.getElementById("alert");
+      const poleSeriesInput = document.getElementById("poleSeries");
       const modal = document.getElementById("successModal");
-      const closeBtn = document.getElementById("closeModal");
 
+      const seriesMap = {
+        "9.0/5": "POL-C0903110",
+        "12.0/3A": "POL-C1203110",
+        "13.5/3A": "POL-C1303110",
+        "15.0/3A": "POL-C1503110"
+      };
+
+      sizeSelect.addEventListener("change", () => {
+        poleSeriesInput.value = seriesMap[sizeSelect.value] || "";
+      });
+
+      // Load Sizes
       get(ref(db, 'size')).then(snapshot => {
         if (snapshot.exists()) {
-          const sizes = snapshot.val();
-          Object.keys(sizes).forEach(key => {
-            const size = sizes[key];
-            const option = document.createElement('option');
-            option.value = size;
-            option.textContent = size;
-            sizeSelect.appendChild(option);
+          Object.values(snapshot.val()).forEach(size => {
+            let opt = new Option(size, size);
+            sizeSelect.add(opt);
           });
         }
       });
 
+      // Load Contractors
       get(ref(db, "/contractors")).then(snapshot => {
         if (snapshot.exists()) {
-          const contractors = snapshot.val();
-          Object.keys(contractors).forEach(name => {
-            let option = document.createElement("option");
-            option.text = name;
-            truckingSelect.add(option);
+          Object.keys(snapshot.val()).forEach(name => {
+            truckingSelect.add(new Option(name, name));
           });
         }
       });
 
       truckingSelect.addEventListener("change", () => {
-        const contractor = truckingSelect.value;
         plateSelect.innerHTML = "";
         driverSelect.innerHTML = "";
-        get(ref(db, `/contractors/${contractor}`)).then(snapshot => {
+        get(ref(db, `/contractors/${truckingSelect.value}`)).then(snapshot => {
           if (snapshot.exists()) {
             const data = snapshot.val();
             Object.keys(data).forEach(key => {
-              if (key.startsWith("plateNumber")) {
-                let option = document.createElement("option");
-                option.text = data[key];
-                plateSelect.add(option);
-              }
-              if (key.startsWith("driverName")) {
-                let option = document.createElement("option");
-                option.text = data[key];
-                driverSelect.add(option);
-              }
+              if (key.startsWith("plateNumber")) plateSelect.add(new Option(data[key], data[key]));
+              if (key.startsWith("driverName")) driverSelect.add(new Option(data[key], data[key]));
             });
           }
         });
       });
 
-      // ----------------------------------------
-      //  SAVE FORM WITH AUTO DR #
-      // ----------------------------------------
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
-        let client = document.getElementById("client").value;
-        let cpris = document.getElementById("cpris").value;
-        const pis = document.getElementById("pis").value;
-        const quantity = document.getElementById("qty").value;
-        const size = sizeSelect.value;
-        const trucking = truckingSelect.value;
-        const plate = plateSelect.value;
-        const driver = driverSelect.value;
-        const poleSeries = document.getElementById("poleSeries").value;
-
         const now = new Date();
         const datePath = now.toISOString().split('T')[0];
-
+        
         try {
-          // GET NEXT DR NUMBER
-          const newVecodrNumber = await getNextDRNumber(datePath);
-          const veco = "#" + newVecodrNumber;
+          const nextNum = await getNextDRNumber(datePath);
+          const vecoNum = "#" + nextNum;
+          document.getElementById("veco").value = vecoNum;
 
-          document.getElementById("veco").value = veco;
-
-          // SAVE
-          const newDrPath = `${datePath}/vecodr${newVecodrNumber}`;
-          await set(ref(db, newDrPath), {
+          await set(ref(db, `${datePath}/vecodr${nextNum}`), {
             details: {
-              client,
-              veco,
-              size,
-              quantity,
-              pis,
-              cpris,
-              trucking,
-              plate,
-              driver,
-              poleSeries
+              client: document.getElementById("client").value,
+              veco: vecoNum,
+              size: sizeSelect.value,
+              quantity: document.getElementById("qty").value,
+              pis: document.getElementById("pis").value,
+              cpris: document.getElementById("cpris").value,
+              trucking: truckingSelect.value,
+              plate: plateSelect.value,
+              driver: driverSelect.value,
+              poleSeries: poleSeriesInput.value
             }
           });
 
-          // auto increment Cpris
-          let newCprisNumber = parseInt(cpris, 10) || 1;
-          newCprisNumber++;
-          document.getElementById("cpris").value = newCprisNumber;
-
-          showAlert("Data saved successfully!", "success");
-
+          modal.style.display = "flex";
+          document.getElementById("cpris").value = (parseInt(document.getElementById("cpris").value) || 0) + 1;
         } catch (err) {
-          showAlert("Error saving data: " + err.message, "error");
+          alert("Error: " + err.message);
         }
       });
 
-      function showAlert(message, type) {
-        if (type === "success") {
-          modal.style.display = "block";
-        } else {
-          alertDiv.textContent = message;
-          alertDiv.className = `alert ${type}`;
-        }
-      }
-
-      closeBtn.onclick = function () {
-        modal.style.display = "none";
-      }
-
-      window.onclick = function (event) {
-        if (event.target == modal) {
-          modal.style.display = "none";
-        }
-      }
+      window.closeMsg = () => modal.style.display = "none";
     });
   </script>
 </head>
 <body>
-  <div class="form-container">
+
+<div class="form-container">
+  <header>
     <h2>DR GENERATOR</h2>
-    <div id="alert" class="alert"></div>
-    <form id="drForm">
-      <label for="client">Client:</label>
-      <input type="text" id="client" value="VECO" required />
+    <p class="subtitle">Enter delivery receipt details below</p>
+  </header>
 
-      <label for="veco">DR # (Auto):</label>
-      <input type="text" id="veco" required readonly />
+  <form id="drForm" class="form-grid">
+    <div class="input-group">
+      <label>Client</label>
+      <input type="text" id="client" value="VECO" required>
+    </div>
 
-      <label for="size">Size:</label>
-      <select id="size" required></select>
+    <div class="input-group">
+      <label>DR # (Auto)</label>
+      <input type="text" id="veco" placeholder="Generated on save" readonly>
+    </div>
 
-      <label for="qty">Quantity:</label>
-      <input type="text" id="qty" required />
+    <div class="input-group">
+      <label>Size</label>
+      <select id="size" required>
+        <option value="" disabled selected>Select size</option>
+      </select>
+    </div>
 
-      <label for="pis">PIS#:</label>
-      <input type="text" id="pis" required />
+    <div class="input-group">
+      <label>Quantity</label>
+      <input type="number" id="qty" placeholder="0" required>
+    </div>
 
-      <label for="cpris">CPRIS#:</label>
-      <input type="text" id="cpris" required />
+    <div class="input-group">
+      <label>PIS#</label>
+      <input type="text" id="pis" required>
+    </div>
 
-      <label for="poleSeries">Pole Series Number:</label>
-      <input type="text" id="poleSeries" required placeholder="e.g. 001-010" />
+    <div class="input-group">
+      <label>CPRIS#</label>
+      <input type="text" id="cpris" required>
+    </div>
 
-      <label for="trucking">TRUCKING:</label>
-      <select id="trucking" required></select>
+    <div class="input-group full-width">
+      <label>Pole Series Number</label>
+      <input type="text" id="poleSeries" required placeholder="Auto-filled or manual entry">
+    </div>
 
-      <label for="plate">PLATE#:</label>
+    <div class="input-group full-width">
+      <label>Trucking Company</label>
+      <select id="trucking" required>
+        <option value="" disabled selected>Select contractor</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Plate#</label>
       <select id="plate" required></select>
+    </div>
 
-      <label for="driver">DRIVER'S NAME:</label>
+    <div class="input-group">
+      <label>Driver's Name</label>
       <select id="driver" required></select>
-
-      <button type="submit">Generate</button>
-    </form>
-
-    <div style="text-align: center; margin-top: 10px;">
-      <a href="index.html">
-        <button type="button" style="background-color: #6c757d;">Back</button>
-      </a>
     </div>
-  </div>
 
-  <!-- Success Modal -->
-  <div id="successModal" class="modal">
-    <div class="modal-content">
-      <span id="closeModal" class="close">&times;</span>
-      <p><strong>DR generated successfully!</strong></p>
+    <div class="button-stack full-width">
+      <button type="submit">Generate Receipt</button>
+      <a href="index.html" class="back-link">Return to Dashboard</a>
     </div>
+  </form>
+</div>
+
+<div id="successModal" class="modal">
+  <div class="modal-content">
+    <h3>Success!</h3>
+    <p>The Delivery Receipt has been recorded successfully in the database.</p>
+    <button class="close-modal" onclick="closeMsg()">Dismiss</button>
   </div>
+</div>
+
 </body>
 </html>
