@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Size List</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+      background: #e8eef5;
+      background-image: linear-gradient(135deg, rgba(255,255,255,.8), transparent 45%), linear-gradient(315deg, rgba(17, 61, 87, .12), transparent 50%);
+      margin: 0;
+      min-height: 100vh;
+      padding: 32px 20px;
+      color: #173042;
+    }
+    .container {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 36px;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(255,255,255,.85);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(25, 52, 70, .14);
+    }
+    .page-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+    h2 { margin: 0; color: #123b51; font-size: 28px; font-weight: 800; letter-spacing: -.6px; }
+    .subtitle { margin: 6px 0 0; color: #718494; font-size: 13px; }
+    .count-badge { padding: 8px 12px; border-radius: 999px; background: #e6f2f3; color: #1c7180; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .alert { min-height: 20px; margin-bottom: 14px; text-align: center; font-size: 14px; font-weight: 600; }
+    .alert.success { color: #16803c; }
+    .alert.error { color: #b42318; }
+    #sizeList { padding: 4px 16px; border: 1px solid #dbe5ec; border-radius: 12px; background: #fff; }
+    .size-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .size-item:last-child { border-bottom: 0; }
+    .size-item span { font-size: 15px; font-weight: 700; color: #1f465c; }
+    .size-item span::before { content: 'SIZE'; display: block; margin-bottom: 4px; color: #8295a1; font-size: 10px; letter-spacing: .7px; }
+    .actions { display: flex; gap: 8px; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 9px 13px;
+      color: #fff;
+      background: #1c7180;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .2s ease, filter .2s ease;
+    }
+    button:hover { filter: brightness(.9); transform: translateY(-1px); }
+    .delete-btn { background: #c2413b; }
+    .navigation { display: flex; gap: 10px; margin-top: 24px; }
+    .navigation a {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      color: #fff;
+      background: #617583;
+      text-align: center;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: filter .2s ease;
+    }
+    .navigation a:first-child { background: #d97706; }
+    .navigation a:hover { filter: brightness(.92); }
+    .empty { padding: 24px 0; color: #718096; text-align: center; }
+    @media (max-width: 480px) {
+      body { padding: 14px; }
+      .container { padding: 26px 18px; }
+      .page-heading { display: block; text-align: center; }
+      .count-badge { display: inline-block; margin-top: 14px; }
+      .size-item { grid-template-columns: 1fr; }
+      .actions button { flex: 1; }
+      .navigation { flex-direction: column; }
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7k0MQEV0Q1Yehjy4pZZhGnQaBrQMhKEU",
+      authDomain: "drgenerator-c598e.firebaseapp.com",
+      projectId: "drgenerator-c598e",
+      storageBucket: "drgenerator-c598e.firebasestorage.app",
+      messagingSenderId: "936022417844",
+      appId: "1:936022417844:web:e4f2778b3313fc8c78d2e1",
+      measurementId: "G-7WDR6XCDVE"
+    };
+
+    const db = getDatabase(initializeApp(firebaseConfig));
+    const list = document.getElementById("sizeList");
+
+    function normalized(value) {
+      return value.trim().replace(/\s+/g, " ").toLowerCase();
+    }
+
+    function showAlert(message, type) {
+      const alert = document.getElementById("alert");
+      alert.textContent = message;
+      alert.className = `alert ${type}`;
+    }
+
+    async function loadSizes() {
+      list.innerHTML = '<p class="empty">Loading sizes...</p>';
+      try {
+        const snapshot = await get(ref(db, "size"));
+        list.innerHTML = "";
+        if (!snapshot.exists()) {
+          document.getElementById("sizeCount").textContent = "0 saved sizes";
+          list.innerHTML = '<p class="empty">No sizes saved yet.</p>';
+          return;
+        }
+        const sizes = snapshot.val();
+        const sizeCount = Object.keys(sizes).length;
+        document.getElementById("sizeCount").textContent = `${sizeCount} saved size${sizeCount === 1 ? "" : "s"}`;
+        Object.keys(sizes)
+          .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+          .forEach(key => list.appendChild(createSizeItem(key, sizes[key])));
+      } catch (error) {
+        list.innerHTML = `<p class="empty">Error loading sizes: ${error.message}</p>`;
+      }
+    }
+
+    function createSizeItem(key, value) {
+      const item = document.createElement("div");
+      item.className = "size-item";
+      const text = document.createElement("span");
+      text.textContent = value;
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "Edit";
+      editButton.addEventListener("click", () => editSize(key, value));
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Delete";
+      deleteButton.className = "delete-btn";
+      deleteButton.addEventListener("click", () => deleteSize(key));
+      actions.append(editButton, deleteButton);
+      item.append(text, actions);
+      return item;
+    }
+
+    async function editSize(key, oldValue) {
+      const newValue = prompt("Edit size:", oldValue);
+      if (newValue === null || !newValue.trim()) return;
+      const snapshot = await get(ref(db, "size"));
+      const sizes = snapshot.val() || {};
+      const duplicate = Object.keys(sizes).some(existingKey => existingKey !== key && normalized(String(sizes[existingKey])) === normalized(newValue));
+      if (duplicate) {
+        showAlert("That size already exists.", "error");
+        return;
+      }
+      try {
+        await set(ref(db, `size/${key}`), newValue.trim());
+        showAlert("Size updated successfully.", "success");
+        loadSizes();
+      } catch (error) {
+        showAlert("Error updating size: " + error.message, "error");
+      }
+    }
+
+    async function deleteSize(key) {
+      if (!confirm("Delete this size?")) return;
+      try {
+        await remove(ref(db, `size/${key}`));
+        showAlert("Size deleted successfully.", "success");
+        loadSizes();
+      } catch (error) {
+        showAlert("Error deleting size: " + error.message, "error");
+      }
+    }
+
+    loadSizes();
+  </script>
+</head>
+<body>
+  <main class="container">
+    <div class="page-heading">
+      <div>
+        <h2>Size Library</h2>
+        <p class="subtitle">Manage the pole sizes available in the DR generator.</p>
+      </div>
+      <div id="sizeCount" class="count-badge">Saved sizes</div>
+    </div>
+    <div id="alert" class="alert"></div>
+    <div id="sizeList" aria-live="polite"></div>
+    <div class="navigation">
+      <a href="add sizes.html">Add Size</a>
+      <a href="index.html">Back</a>
+    </div>
+  </main>
+</body>
+</html>

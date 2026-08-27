@@ -5,69 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Size Entry</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
+      font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+      background: linear-gradient(135deg, #dfeaf2, #f7fafc);
+      background-image: linear-gradient(135deg, rgba(255,255,255,.75), transparent 50%), linear-gradient(315deg, rgba(30, 91, 119, .14), transparent 55%);
       margin: 0;
-      padding: 0;
+      padding: 24px;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
     }
     .form-container {
-      background-color: #fff;
-      padding: 20px 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, .96);
+      padding: 38px;
+      border: 1px solid rgba(255,255,255,.85);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(27, 54, 72, .14);
       width: 100%;
-      max-width: 400px;
+      max-width: 470px;
     }
     h2 {
       text-align: center;
-      color: #333;
+      color: #123b51;
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -.6px;
     }
+    .subtitle { margin: 0 0 28px; text-align: center; color: #718494; font-size: 13px; }
     label {
       display: block;
-      font-size: 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .4px;
       margin-bottom: 8px;
-      color: #555;
+      color: #476170;
+      text-transform: uppercase;
     }
     input {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease;
+      padding: 13px 14px;
+      margin-bottom: 22px;
+      border: 1px solid #c8d6df;
+      border-radius: 9px;
+      font: inherit;
+      font-size: 15px;
+      color: #173042;
+      background: #f8fbfd;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
     }
     input:focus {
-      border-color: #007bff;
+      border-color: #1c7180;
+      background: #fff;
       outline: none;
+      box-shadow: 0 0 0 4px rgba(28, 113, 128, .12);
     }
     button {
       width: 100%;
-      padding: 12px;
-      background-color: #007bff;
+      padding: 14px;
+      background: #1c7180;
       color: white;
       border: none;
-      border-radius: 4px;
-      font-size: 16px;
+      border-radius: 9px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
     }
     button:hover {
-      background-color: #0056b3;
+      background: #155b67;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(21, 91, 103, .2);
     }
     .alert {
-      color: red;
+      min-height: 20px;
       font-size: 14px;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: 600;
     }
     .alert.success {
-      color: green;
+      color: #16803c;
+    }
+    .alert.error { color: #b42318; }
+    .links { display: flex; gap: 10px; margin-top: 16px; }
+    .links a {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 8px;
+      color: #fff;
+      background: #617583;
+      text-align: center;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .links a:first-child { background: #d97706; }
+    .links a:hover { filter: brightness(.92); }
+    @media (max-width: 480px) {
+      body { padding: 14px; }
+      .form-container { padding: 28px 20px; }
+      .links { flex-direction: column; }
     }
   </style>
 
@@ -112,8 +154,18 @@
         try {
           const snapshot = await get(sizeRef);
           const existingData = snapshot.exists() ? snapshot.val() : {};
-          const count = Object.keys(existingData).length + 1;
-          const key = `size${count}`;
+          const normalizedSize = value => value.trim().replace(/\s+/g, " ").toLowerCase();
+          const duplicate = Object.values(existingData).some(value => normalizedSize(String(value)) === normalizedSize(sizeValue));
+          if (duplicate) {
+            showAlert("That size already exists.", "error");
+            return;
+          }
+
+          const numbers = Object.keys(existingData)
+            .filter(key => key.startsWith("size"))
+            .map(key => Number(key.slice(4)))
+            .filter(Number.isFinite);
+          const key = `size${numbers.length ? Math.max(...numbers) + 1 : 1}`;
 
           await set(ref(db, `size/${key}`), sizeValue);
           showAlert("Size added successfully!", "success");
@@ -133,26 +185,16 @@
 <body>
   <div class="form-container">
     <h2>Enter Size</h2>
+    <p class="subtitle">Add a pole size to your list</p>
     <div id="alert" class="alert"></div>
     <form id="sizeForm">
       <label for="sizeInput">Size:</label>
       <input type="text" id="sizeInput" required />
       <button type="submit">Submit</button>
     </form>
-    <div style="text-align: center; margin-top: 15px;">
-      <a href="index.html" style="
-        display: inline-block;
-        margin-top: 10px;
-        padding: 10px 20px;
-        background-color: #6c757d;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        font-size: 16px;
-        transition: background-color 0.3s ease;
-      " onmouseover="this.style.backgroundColor='#5a6268'" onmouseout="this.style.backgroundColor='#6c757d'">
-        Back
-      </a>
+    <div class="links">
+      <a href="size-list.html">View Sizes</a>
+      <a href="index.html">Back to Dashboard</a>
     </div>
   </div>
 </body>

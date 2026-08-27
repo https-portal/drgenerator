@@ -7,6 +7,8 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
+    * { box-sizing: border-box; }
+
     body {
         font-family: 'Plus Jakarta Sans', sans-serif;
         /* Modern Deep Blue Gradient */
@@ -18,7 +20,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
+        padding: 24px;
+        overflow-y: auto;
         color: #f8fafc;
     }
 
@@ -28,7 +32,7 @@
         border-radius: 24px;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
         width: 100%;
-        max-width: 420px;
+        max-width: 980px;
         backdrop-filter: blur(10px);
     }
 
@@ -39,6 +43,8 @@
         font-weight: 700;
         letter-spacing: -0.5px;
     }
+
+    @media (max-width: 760px) { .form-container { padding: 28px 20px; } }
 
     /* Subtitle effect */
     .form-container::before {
@@ -138,71 +144,55 @@
 
     // Import the Firebase modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    // --- KINI NGA PART ANG I-REPLACE NIMO ---
-    document.getElementById('contractorForm').addEventListener('submit', function(event) {
+    const contractorForm = document.getElementById('contractorForm');
+
+    function normalized(value) {
+        return value.trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function nextKey(data, prefix) {
+        const numbers = Object.keys(data)
+            .filter(key => key.startsWith(prefix))
+            .map(key => Number(key.slice(prefix.length)))
+            .filter(Number.isFinite);
+        return `${prefix}${numbers.length ? Math.max(...numbers) + 1 : 1}`;
+    }
+
+    contractorForm.addEventListener('submit', async event => {
         event.preventDefault();
-
-        const contractorName = document.getElementById('contractor').value;
-        const plateNumber = document.getElementById('plateNumber').value;
-        const driverName = document.getElementById('driverName').value;
-
+        const contractorName = document.getElementById('contractor').value.trim();
+        const plateNumber = document.getElementById('plateNumber').value.trim();
+        const driverName = document.getElementById('driverName').value.trim();
         if (!contractorName || !plateNumber || !driverName) {
             displayAlert('Please fill all fields', 'error');
             return;
         }
-
-        const contractorRef = ref(database, 'contractors/' + contractorName);
-        
-        get(contractorRef).then(snapshot => {
-            let contractorData = snapshot.exists() ? snapshot.val() : { contractorName: contractorName };
-            
-            let existingPlateKey = null;
-            let plateCount = 0;
-            let driverCount = 0;
-
-            // I-check ang tanan existing keys sa database
-            Object.keys(contractorData).forEach(key => {
-                if (key.startsWith('plateNumber')) {
-                    plateCount++;
-                    if (contractorData[key] === plateNumber) {
-                        existingPlateKey = key; 
-                    }
-                }
-                if (key.startsWith('driverName')) {
-                    driverCount++;
-                }
-            });
-
-            if (existingPlateKey) {
-                // CASE: Same Plate Number - Add driver lang
-                let newDriverIndex = driverCount + 1;
-                set(ref(database, `contractors/${contractorName}/driverName${newDriverIndex}`), driverName)
-                    .then(() => {
-                        displayAlert('Existing plate detected. Added new driver!', 'success');
-                        document.getElementById('contractorForm').reset();
-                    });
-            } else {
-                // CASE: New Plate Number - Add both plate and driver
-                let newIndex = plateCount + 1;
-                set(ref(database, `contractors/${contractorName}/plateNumber${newIndex}`), plateNumber);
-                set(ref(database, `contractors/${contractorName}/driverName${driverCount + 1}`), driverName)
-                    .then(() => {
-                        displayAlert('New plate and driver saved!', 'success');
-                        document.getElementById('contractorForm').reset();
-                    })
-                    .catch(error => {
-                        displayAlert('Error saving data: ' + error.message, 'error');
-                    });
+        try {
+            const contractorRef = ref(database, `contractors/${contractorName}`);
+            const snapshot = await get(contractorRef);
+            const data = snapshot.exists() ? snapshot.val() : {};
+            const plateExists = Object.keys(data).some(key => key.startsWith('plateNumber') && normalized(data[key]) === normalized(plateNumber));
+            const driverExists = Object.keys(data).some(key => key.startsWith('driverName') && normalized(data[key]) === normalized(driverName));
+            const changes = {};
+            if (!plateExists) changes[nextKey(data, 'plateNumber')] = plateNumber;
+            if (!driverExists) changes[nextKey(data, 'driverName')] = driverName;
+            if (!Object.keys(changes).length) {
+                displayAlert('Both plate number and driver already exist.', 'error');
+                return;
             }
-        });
+            await update(contractorRef, { contractorName, ...changes });
+            displayAlert(plateExists || driverExists ? 'Only the new entry was added.' : 'Contractor saved successfully!', 'success');
+            contractorForm.reset();
+        } catch (error) {
+            displayAlert('Error saving data: ' + error.message, 'error');
+        }
     });
-    // --- KATAPUSAN SA I-REPLACE ---
 
     function displayAlert(message, type) {
         const alertDiv = document.getElementById('alert');
@@ -216,7 +206,7 @@
     <div class="form-container">
         <h2>Contractor Entry</h2>
         <div id="alert" class="alert"></div>
-        
+
         <form id="contractorForm">
             <div style="margin-bottom: 5px;">
                 <label for="contractor">Contractor Name</label>
@@ -235,6 +225,10 @@
 
             <button type="submit">Complete Registration</button>
         </form>
+
+        <button class="back-btn" onclick="window.location.href='contractor-list.html'">
+            View Contractor List
+        </button>
 
         <button class="back-btn" onclick="window.location.href='index.html'">
             ← Return to Dashboard
